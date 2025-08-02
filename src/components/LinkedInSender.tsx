@@ -2,46 +2,84 @@ import React, { useState } from 'react';
 import { Linkedin, Send, CheckCircle, AlertCircle, Mail } from 'lucide-react';
 
 export const LinkedInSender: React.FC = () => {
-  const [profileUrl, setProfileUrl] = useState('https://linkedin.com/in/username');
+  const [profileUrl, setProfileUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState('');
-  const [status, setStatus] = useState<'ready' | 'sending' | 'success' | 'error'>('ready');
+  const [status, setStatus] = useState<'ready' | 'sending' | 'success' | 'error' | 'duplicate' | 'notfound'>('ready');
+
 
   const handleSendEmail = async () => {
-    if (!profileUrl.trim()) return;
+  if (!profileUrl.trim()) return;
 
-    setIsLoading(true);
-    setStatus('sending');
-    setResponse('');
+  setIsLoading(true);
+  setStatus('sending');
+  setResponse('');
 
-    try {
-      const response = await fetch('https://n8n.srv846726.hstgr.cloud/webhook-test/998c2c38-e086-48dd-ae6a-cedc7bdc7abf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          linkedinProfile: profileUrl,
-          timestamp: new Date().toISOString(),
-          action: 'send_email'
-        }),
-      });
+  try {
+    const response = await fetch('https://n8n.srv846726.hstgr.cloud/webhook/998c2c38-e086-48dd-ae6a-cedc7bdc7abf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        linkedin_url: profileUrl,
+        timestamp: new Date().toISOString(),
+        action: 'send_email'
+      }),
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        setResponse(JSON.stringify(data, null, 2));
-        setStatus('success');
-      } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Error sending request:', error);
-      setResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
-      setStatus('error');
-    } finally {
-      setIsLoading(false);
+   if (response.ok) {
+  const text = await response.text();
+  try {
+    const data = JSON.parse(text);
+
+    // ✅ Status logic based on response
+    if (data.message?.includes('already been Done')) {
+      setStatus('duplicate');
+    } else if (data.message?.includes('Email not found')) {
+      setStatus('notfound');
+    } else {
+      setStatus('success');
     }
-  };
+
+    // ✅ Displayed response
+    if (typeof data === 'string') {
+      setResponse(data);
+    } else if (data.message && data['Email Body']) {
+      setResponse(`✅ ${data.message}\n\n📧 Email Preview:\n${data['Email Body']}`);
+    } else if (data.message) {
+      setResponse(data.message);
+    } else {
+      setResponse(JSON.stringify(data, null, 2));
+    }
+
+  } catch {
+    // ⬇️ Place the improved catch block here
+    setResponse(text);
+
+    if (text.includes('already been Done')) {
+      setStatus('duplicate');
+    } else if (text.includes('Email not found')) {
+      setStatus('notfound');
+    } else {
+      setStatus('success');
+    }
+  }
+}
+
+else {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+  } catch (error) {
+    console.error('Error sending request:', error);
+    setResponse(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
+    setStatus('error');
+
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const getStatusIcon = () => {
     switch (status) {
@@ -57,17 +95,22 @@ export const LinkedInSender: React.FC = () => {
   };
 
   const getStatusText = () => {
-    switch (status) {
-      case 'sending':
-        return 'Sending...';
-      case 'success':
-        return 'Email Sent Successfully';
-      case 'error':
-        return 'Error Occurred';
-      default:
-        return 'System Ready';
-    }
-  };
+  switch (status) {
+    case 'sending':
+      return 'Sending...';
+    case 'success':
+      return 'Email Sent Successfully';
+    case 'duplicate':
+      return 'This URL has already been used';
+    case 'notfound':
+      return 'Email Not Found';
+    case 'error':
+      return 'Error Occurred';
+    default:
+      return 'System Ready';
+  }
+};
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
