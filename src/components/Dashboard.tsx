@@ -70,10 +70,10 @@ export const Dashboard: React.FC = () => {
           </button>
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">BZ</span>
+              <span className="text-white font-semibold text-sm">MZ</span>
             </div>
             <div className="hidden sm:block">
-              <p className="text-white font-medium">Bilal Zindani</p>
+              <p className="text-white font-medium">Mishal Zubair</p>
               <p className="text-gray-400 text-sm">Admin</p>
             </div>
           </div>
