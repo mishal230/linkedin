@@ -29,7 +29,7 @@ export const Dashboard: React.FC = () => {
       value: '1,459',
       change: '+89',
       icon: Users,
-      color: '#1F51FF'
+      color: 'indigo'
     }
   ];
 
